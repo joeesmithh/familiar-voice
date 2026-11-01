@@ -1,0 +1,84 @@
+# Single source of truth for packaging, dependencies, and tool settings.
+# Install for development with: python -m pip install -e ".[dev]"
+
+# How pip builds/installs this project. pip downloads setuptools into an
+# isolated environment and asks it to build the package.
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+# Project metadata
+[project]
+# Distribution name used by pip. The import name is still
+# `familiar_voice`, which comes from the folder under src/.
+name = "familiar-voice"
+version = "0.1.0"
+description = "Caregiver-voice reassurance app for people who feel anxious when their caregiver is away."
+readme = "README.md"
+authors = [
+    { name = "Joseph Smith" },
+    { name = "Brodey Morrow" },
+    { name = "Nathan Cline" },
+]
+# coqui-tts (XTTS-v2) only supports Python 3.10 and 3.11; pip refuses
+# to install on any other version.
+requires-python = ">=3.10,<3.12"
+# Runtime dependencies, installed on every machine that runs the app.
+dependencies = [
+    "gradio",     # web UI, mic recording, audio playback
+    "numpy",      # audio arrays
+    "soundfile",  # reading/writing WAV files
+]
+
+# Extra dependency groups, installed only on request: pip install -e ".[dev]"
+[project.optional-dependencies]
+dev = [
+    "pytest",  # test runner
+    "ruff",    # formatter and linter
+]
+
+# Package discovery: find every package inside src/ (the src layout), so
+# `familiar_voice` and its subpackages get installed.
+[tool.setuptools.packages.find]
+where = ["src"]
+
+# Ruff settings shared by `ruff format` and `ruff check`.
+[tool.ruff]
+line-length = 88
+target-version = "py311"  # allow syntax and upgrades valid for Python 3.11
+src = ["src"]             # treat familiar_voice as first-party when sorting imports
+
+# Which lint rule families `ruff check` enforces.
+[tool.ruff.lint]
+select = [
+    "E",    # pycodestyle errors (PEP 8)
+    "F",    # pyflakes: unused imports/variables, undefined names
+    "W",    # pycodestyle warnings (whitespace)
+    "I",    # isort: import ordering
+    "N",    # pep8-naming
+    "UP",   # pyupgrade: prefer modern syntax
+    "B",    # flake8-bugbear: likely bugs
+    "SIM",  # flake8-simplify: simpler equivalent code
+    "D",    # pydocstyle: docstrings
+]
+
+# Docstrings must follow the NumPy style.
+[tool.ruff.lint.pydocstyle]
+convention = "numpy"
+
+# Test functions are named by behavior, so docstrings are not required there.
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["D"]
+
+# pytest settings (used by `python -m pytest`).
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]  # tests can import familiar_voice even without pip install
+# Skip slow and integration tests by default. Passing `-m slow` on the
+# command line overrides this to run them.
+addopts = "-m 'not slow and not integration'"
+# Registered custom markers; use as @pytest.mark.slow / @pytest.mark.integration.
+markers = [
+    "slow: loads real voice-model weights (minutes on CPU)",
+    "integration: calls external services such as the Claude API",
+]

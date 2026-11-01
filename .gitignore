@@ -1,0 +1,19 @@
+# Configs
+.*/
+
+# Local voice samples, generated audio, and logs (private; never commit)
+data/
+
+# Environments and secrets
+.venv/
+.env
+
+# Python caches
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+
+# Claude
+CLAUDE.md
