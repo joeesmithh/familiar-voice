@@ -1,0 +1,44 @@
+{
+  "categories": [
+    {
+      "id": "worried",
+      "label": "I'm worried",
+      "icon": "😟",
+      "phrases": [
+        {"id": "worried-1", "text": "It's okay. You are safe, and I'm thinking about you."},
+        {"id": "worried-2", "text": "Take a slow, deep breath with me. In, and out. You're doing great."},
+        {"id": "worried-3", "text": "Everything is alright. Your nurse is right there if you need anything."}
+      ]
+    },
+    {
+      "id": "lonely",
+      "label": "I feel lonely",
+      "icon": "🤗",
+      "phrases": [
+        {"id": "lonely-1", "text": "I miss you too. I love you very much."},
+        {"id": "lonely-2", "text": "You are never alone. I'm thinking about you right now."},
+        {"id": "lonely-3", "text": "How about we look at some pictures together when I'm back?"}
+      ]
+    },
+    {
+      "id": "when-home",
+      "label": "When are you coming home?",
+      "icon": "🏠",
+      "phrases": [
+        {"id": "when-home-1", "text": "I'll be home later today. I can't wait to see you."},
+        {"id": "when-home-2", "text": "I'm coming back after work, like always."},
+        {"id": "when-home-3", "text": "I'll see you soon. Until then, you're in good hands."}
+      ]
+    },
+    {
+      "id": "routine",
+      "label": "What do I do now?",
+      "icon": "📋",
+      "phrases": [
+        {"id": "routine-1", "text": "Maybe it's a good time for a drink of water."},
+        {"id": "routine-2", "text": "How about some music or your favorite show?"},
+        {"id": "routine-3", "text": "Ask your nurse what's next today. They know the plan."}
+      ]
+    }
+  ]
+}

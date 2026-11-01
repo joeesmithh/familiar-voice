@@ -42,6 +42,10 @@ dev = [
 [tool.setuptools.packages.find]
 where = ["src"]
 
+# Non-Python files shipped inside the package (default phrase set).
+[tool.setuptools.package-data]
+familiar_voice = ["core/*.json"]
+
 # Ruff settings shared by `ruff format` and `ruff check`.
 [tool.ruff]
 line-length = 88
