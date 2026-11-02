@@ -1,5 +1,7 @@
 # Familiar Voice
 
+Familiar Voice is a Gradio web app for people with intellectual or cognitive disabilities who feel anxious when their caregiver is away. The caregiver records about 30 seconds of speech and writes a set of reassurance phrases. The app clones the caregiver's voice and pre-builds a library of those phrases in that voice. The person being cared for taps buttons to hear a familiar, calming reply.
+
 ## Quick Start
 
 ### Prerequisites
@@ -63,4 +65,4 @@ Fix any remaining Ruff warnings and confirm all tests pass before you commit.
 | `python -m pytest -m slow`            | Tests that load real voice models (minutes on CPU) |
 | `python -m pytest -m integration`     | Tests that call the Claude API                     |
 
-Integration tests need `ANTHROPIC_API_KEY` set as an environment variable. Never commit the key.
+Integration tests need `ANTHROPIC_API_KEY` set as an environment variable.
