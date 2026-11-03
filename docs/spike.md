@@ -31,7 +31,21 @@ Coqui Public Model License, which allows non-commercial use such as coursework.
 The script replaces everything between the markers with its latest run.
 
 <!-- timing:start -->
-Not run yet.
+### Run 2026-11-03 — `xtts`
+
+- **Machine:** Windows-10-10.0.26300-SP0, Intel64 Family 6 Model 198 Stepping 2, GenuineIntel, 18 logical cores, Python 3.11.9
+- **Reference audio:** 1 file(s), 27.8 s
+- **Model load:** 9.0 s
+
+| # | Phrase | Synthesis (s) | Audio (s) | Real-time factor |
+| --- | --- | --- | --- | --- |
+| 1 | It's okay. You are safe, and I'm thinking about you. | 6.2 | 5.9 | 1.05 |
+| 2 | Take a slow, deep breath with me. In, and out. You're doing great. | 8.9 | 8.2 | 1.08 |
+| 3 | Everything is alright. Your nurse is right there if you need anything. | 5.4 | 5.1 | 1.05 |
+| 4 | I miss you too. I love you very much. | 6.2 | 5.9 | 1.05 |
+| 5 | You are never alone. I'm thinking about you right now. | 4.3 | 4.0 | 1.08 |
+
+**Mean:** 6.2 s per phrase; real-time factor 1.06 (synthesis time ÷ audio length; below 1 is faster than real time).
 <!-- timing:end -->
 
 ## Decision

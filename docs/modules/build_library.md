@@ -64,8 +64,9 @@ library/
 - **Uses:** `familiar_voice.core.config` (for `library_dir()`,
   `samples_dir()`), `familiar_voice.core.phrases` (for `load_phrases()`),
   `familiar_voice.voice.engine` (for `synthesize()`).
-- **Used by:** nothing yet; the library playback picker and the caregiver's
-  "Build voice library" button depend on it.
+- **Used by:** `familiar_voice.core.library` (for `load_manifest()`),
+  `familiar_voice.app.devtools`; the caregiver's "Build voice library" button
+  will depend on it.
 
 ## Design Notes
 
