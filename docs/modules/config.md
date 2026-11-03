@@ -24,7 +24,7 @@ building paths themselves. It does not read or write file contents; see
 ```python
 from familiar_voice.core.config import library_dir, phrases_path
 
-print(phrases_path())                  # data/phrases.json
+print(phrases_path())  # data/phrases.json
 wav = library_dir() / "worried" / "worried-1.wav"
 ```
 

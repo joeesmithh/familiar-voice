@@ -10,3 +10,4 @@ module.
 | [`familiar_voice.core.log`](log.md) | Appends interaction events to `log.jsonl` and reads them back newest first. |
 | [`familiar_voice.core.phrases`](phrases.md) | Loads, validates, edits, and saves the caregiver's reassurance phrases. |
 | [`familiar_voice.voice.engine`](engine.md) | Turns text and voice samples into a WAV through one swappable voice-cloning interface. |
+| [`familiar_voice.voice.preprocess`](preprocess.md) | Converts caregiver recordings into trimmed, normalized mono 24 kHz WAVs for cloning. |

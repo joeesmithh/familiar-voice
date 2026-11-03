@@ -27,6 +27,7 @@ requires-python = ">=3.10,<3.12"
 dependencies = [
     "gradio",     # web UI, mic recording, audio playback
     "numpy",      # audio arrays
+    "pydub",      # sample conversion and trimming; needs ffmpeg on PATH
     "soundfile",  # reading/writing WAV files
 ]
 
