@@ -7,6 +7,12 @@ Familiar Voice is a Gradio web app for people with intellectual or cognitive dis
 ### Prerequisites
 
 - **Python 3.11.** coqui-tts (XTTS-v2) supports only Python 3.10 and 3.11.
+  Install a standalone Python:
+  - Windows: `winget install Python.Python.3.11`, or the installer from
+    [python.org](https://www.python.org/downloads/windows/). This also installs the
+    `py` launcher, which lets several Python versions sit side by side.
+  - macOS: `brew install python@3.11`
+  - Linux: `sudo apt install python3.11 python3.11-venv`
 - **ffmpeg** on your `PATH`. pydub uses it to convert voice samples.
   - Windows: `winget install ffmpeg`
   - macOS: `brew install ffmpeg`
@@ -14,9 +20,10 @@ Familiar Voice is a Gradio web app for people with intellectual or cognitive dis
 
 ### 1. Create and activate a virtual environment
 
-```bash
-python -m venv .venv
-```
+| OS            | Create command                 |
+| ------------- | ------------------------------ |
+| Windows       | `py -3.11 -m venv .venv`       |
+| macOS / Linux | `python3.11 -m venv .venv`     |
 
 | Shell                | Activate command                |
 | -------------------- | ------------------------------- |
@@ -24,7 +31,8 @@ python -m venv .venv
 | Git Bash (Windows)   | `source .venv/Scripts/activate` |
 | macOS / Linux        | `source .venv/bin/activate`     |
 
-On Windows with more than one Python installed, use `py -3.11 -m venv .venv` instead.
+If PowerShell refuses to run `Activate.ps1`, allow local scripts once with
+`Set-ExecutionPolicy -Scope CurrentUser RemoteSigned`.
 
 ### 2. Install dependencies
 
@@ -41,14 +49,11 @@ on a machine that only runs the app.
 
 #### Troubleshooting: SSL certificate error on model download
 
-On Windows, if your venv was created from a conda Python, the first XTTS-v2
-download can fail with `FileNotFoundError: [Errno 2] No such file or directory`
-raised from `ssl.create_default_context` / `load_verify_locations`.
-
-Cause: conda's bash activation script sets `SSL_CERT_FILE` to
-`<conda env>/ssl/cacert.pem`. On Windows that file actually lives at
-`<conda env>\Library\ssl\cacert.pem`. Any shell started from Git Bash, or from a
-terminal that inherits its environment, passes the wrong path to Python.
+If the first XTTS-v2 download fails with
+`FileNotFoundError: [Errno 2] No such file or directory` raised from
+`ssl.create_default_context` / `load_verify_locations`, the `SSL_CERT_FILE`
+environment variable points at a certificate file that doesn't exist. Some other
+Python distribution usually left it behind.
 
 Check the value:
 
@@ -56,24 +61,10 @@ Check the value:
 $env:SSL_CERT_FILE
 ```
 
-Fix it by pointing the variable at the real file, using your own conda env path:
-
-```powershell
-# PowerShell, current session only
-$env:SSL_CERT_FILE = "$env:USERPROFILE\miniconda3\envs\python_3.11\Library\ssl\cacert.pem"
-```
-
-```bash
-# Git Bash, current session only
-export SSL_CERT_FILE="$USERPROFILE\miniconda3\envs\python_3.11\Library\ssl\cacert.pem"
-```
-
-Other options:
-
-- Clear it for the session (`Remove-Item Env:SSL_CERT_FILE` or
-  `unset SSL_CERT_FILE`). Python then uses the Windows certificate store.
-- Make it permanent by setting `SSL_CERT_FILE` as a user environment variable in
-  Windows settings, then opening a new terminal.
+Clear it for the session with `Remove-Item Env:SSL_CERT_FILE` (PowerShell) or
+`unset SSL_CERT_FILE` (Git Bash). Python then uses the system certificate store.
+If it comes back in every new terminal, delete it from your user environment
+variables in Windows settings, or from your shell profile.
 
 This only matters for downloads. Once the model is cached in
 `~/.cache/huggingface`, later runs work offline.
@@ -95,6 +86,7 @@ python -m familiar_voice.app.devtools
 
 The console stores its data in `data_dev_tools/` by default, and the app uses
 `data/`. Both folders are git-ignored. Set `FV_DATA_DIR` to use a different folder.
+See [docs/modules/devtools.md](docs/modules/devtools.md) for a tab-by-tab guide.
 
 ### 4. Before every commit
 

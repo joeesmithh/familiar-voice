@@ -110,3 +110,35 @@ def test_progress_adapter_passes_fraction():
     report(1, 4, "hello")
     report(0, 0, "none")
     assert calls == [(0.25, "hello"), (1.0, "none")]
+
+
+def test_synth_out_path_is_readable_and_unique(data_dir):
+    first = devtools.synth_out_path("It's okay. You are safe!", "fake")
+    assert first.parent == devtools.synth_dir()
+    assert first.name.endswith("_fake_it-s-okay-you-are-safe.wav")
+    first.touch()
+    second = devtools.synth_out_path("It's okay. You are safe!", "fake")
+    assert second != first and second.stem.endswith("_2")
+
+
+def test_synthesize_callback_lists_and_deletes_outputs(data_dir):
+    audio, message, _ = devtools._on_synthesize("Hello there", "fake", "en")
+    assert audio is not None and "fake" in message
+    legacy = data_dir / "synth_old.wav"
+    legacy.touch()
+    found = devtools.find_synthesized()
+    assert Path(audio) in found and legacy in found
+    assert not any("library" in p.parts for p in found)
+    name = devtools._synth_choices()[0][1]
+    assert devtools._on_play_synthesized(name) is not None
+    assert devtools.delete_synthesized() == "Deleted 2 synthesized file(s)."
+    assert devtools.find_synthesized() == []
+
+
+def test_default_engine_is_xtts_unless_env_names_another(monkeypatch):
+    monkeypatch.delenv("FV_ENGINE", raising=False)
+    assert devtools.default_engine() == "xtts"
+    monkeypatch.setenv("FV_ENGINE", "nonsense")
+    assert devtools.default_engine() == "xtts"
+    monkeypatch.setenv("FV_ENGINE", "fake")
+    assert devtools.default_engine() == "fake"

@@ -47,7 +47,12 @@ from familiar_voice.voice.build_library import (
     find_samples,
     load_manifest,
 )
-from familiar_voice.voice.engine import ENGINE_ENV_VAR, ENGINES, synthesize
+from familiar_voice.voice.engine import (
+    DEFAULT_ENGINE,
+    ENGINE_ENV_VAR,
+    ENGINES,
+    synthesize,
+)
 from familiar_voice.voice.preprocess import (
     MAX_TOTAL_SECONDS,
     MIN_TOTAL_SECONDS,
@@ -58,6 +63,9 @@ from familiar_voice.voice.preprocess import (
 logger = logging.getLogger(__name__)
 
 SAMPLE_NAME = re.compile(r"^sample_(\d+)\.wav$")
+SYNTH_DIR_NAME = "synthesized"  # Synthesize-tab outputs, apart from library/
+LEGACY_SYNTH_GLOB = "synth_*.wav"  # older outputs written to the data root
+SLUG_MAX_CHARS = 40
 MANIFEST_HEADERS = ["id", "category", "text", "on disk"]
 EVENT_HEADERS = ["ts", "kind", "category", "phrase_id", "flagged", "extra"]
 DEFAULT_EVENT_LIMIT = 50
@@ -77,11 +85,11 @@ def default_engine() -> str:
     Returns
     -------
     str
-        ``FV_ENGINE`` if it names a registered engine, otherwise ``"fake"``
-        so nothing slow happens by accident.
+        ``FV_ENGINE`` if it names a registered engine, otherwise
+        ``DEFAULT_ENGINE`` (``"xtts"``).
     """
     name = os.environ.get(ENGINE_ENV_VAR, "")
-    return name if name in ENGINES else "fake"
+    return name if name in ENGINES else DEFAULT_ENGINE
 
 
 def next_sample_path() -> Path:
@@ -98,6 +106,72 @@ def next_sample_path() -> Path:
         if (match := SAMPLE_NAME.match(path.name))
     ]
     return samples_dir() / f"sample_{max(numbers, default=0) + 1}.wav"
+
+
+def synth_dir() -> Path:
+    """Return the folder for Synthesize-tab outputs, creating it if needed.
+
+    Returns
+    -------
+    Path
+        ``<data root>/synthesized``.
+    """
+    path = data_dir() / SYNTH_DIR_NAME
+    path.mkdir(parents=True, exist_ok=True)
+    return path
+
+
+def synth_out_path(text: str, engine: str) -> Path:
+    """Return a new, readable WAV path for one synthesized phrase.
+
+    Parameters
+    ----------
+    text : str
+        The phrase; its first words become part of the file name.
+    engine : str
+        Engine name, also part of the file name.
+
+    Returns
+    -------
+    Path
+        ``synthesized/<YYYYmmdd-HHMMSS>_<engine>_<slug>.wav``, with a
+        ``_<n>`` suffix if that name is already taken.
+    """
+    slug = re.sub(r"[^a-z0-9]+", "-", text.lower()).strip("-")[:SLUG_MAX_CHARS]
+    stem = f"{time.strftime('%Y%m%d-%H%M%S')}_{engine}_{slug.strip('-') or 'phrase'}"
+    path = synth_dir() / f"{stem}.wav"
+    n = 2
+    while path.exists():
+        path = synth_dir() / f"{stem}_{n}.wav"
+        n += 1
+    return path
+
+
+def find_synthesized() -> list[Path]:
+    """List every individually synthesized WAV, newest first.
+
+    Returns
+    -------
+    list[Path]
+        WAVs in ``synthesized/`` plus older ``synth_*.wav`` files in the
+        data root. Library WAVs are not included.
+    """
+    paths = [*synth_dir().glob("*.wav"), *data_dir().glob(LEGACY_SYNTH_GLOB)]
+    return sorted(paths, key=lambda p: p.stat().st_mtime, reverse=True)
+
+
+def delete_synthesized() -> str:
+    """Delete every individually synthesized WAV.
+
+    Returns
+    -------
+    str
+        How many files were removed.
+    """
+    paths = find_synthesized()
+    for path in paths:
+        path.unlink(missing_ok=True)
+    return f"Deleted {len(paths)} synthesized file(s)."
 
 
 def samples_report() -> str:
@@ -360,13 +434,38 @@ def _quick_edit(
     return phrases_json(), message
 
 
-def _on_synthesize(text: str, engine: str, lang: str) -> tuple[str | None, str]:
+def _synth_choices() -> list[tuple[str, str]]:
+    root = data_dir()
+    return [(p.name, str(p.relative_to(root))) for p in find_synthesized()]
+
+
+def _on_synthesize(text: str, engine: str, lang: str) -> tuple[str | None, str, Any]:
     start = time.perf_counter()
+    out_path = synth_out_path(text, engine) if text.strip() else None
     try:
-        path = synthesize(text, find_samples(), lang=lang or "en", engine=engine)
+        path = synthesize(
+            text, find_samples(), lang=lang or "en", out_path=out_path, engine=engine
+        )
     except EXPECTED_ERRORS as err:
-        return None, f"Failed: {err}"
-    return str(path), f"{engine}: {time.perf_counter() - start:.2f} s → {path.name}"
+        if out_path is not None:
+            out_path.unlink(missing_ok=True)
+        return None, f"Failed: {err}", gr.Dropdown(choices=_synth_choices())
+    return (
+        str(path),
+        f"{engine}: {time.perf_counter() - start:.2f} s → {path.name}",
+        gr.Dropdown(choices=_synth_choices()),
+    )
+
+
+def _on_play_synthesized(name: str | None) -> str | None:
+    if not name:
+        return None
+    path = data_dir() / name
+    return str(path) if path.is_file() else None
+
+
+def _on_delete_synthesized() -> tuple[str, Any, None]:
+    return delete_synthesized(), gr.Dropdown(choices=[], value=None), None
 
 
 def _on_build(
@@ -493,10 +592,22 @@ def build_console() -> gr.Blocks:
             synth_btn = gr.Button("Synthesize", variant="primary")
             synth_audio = gr.Audio(label="Output", interactive=False)
             synth_msg = gr.Textbox(label="Result", interactive=False)
+            gr.Markdown("### Previously synthesized (not the library)")
+            with gr.Row():
+                synth_pick = gr.Dropdown(label="Play a synthesized phrase", choices=[])
+                synth_past_audio = gr.Audio(label="Synthesized WAV", interactive=False)
+            delete_synth_btn = gr.Button(
+                "Delete all synthesized phrases", variant="stop"
+            )
             synth_btn.click(
                 _on_synthesize,
                 [synth_text, synth_engine, synth_lang],
-                [synth_audio, synth_msg],
+                [synth_audio, synth_msg, synth_pick],
+            )
+            synth_pick.change(_on_play_synthesized, synth_pick, synth_past_audio)
+            delete_synth_btn.click(
+                _on_delete_synthesized,
+                outputs=[synth_msg, synth_pick, synth_past_audio],
             )
 
         with gr.Tab("Library"):
@@ -550,6 +661,7 @@ def build_console() -> gr.Blocks:
                 gr.Dropdown(choices=_sample_choices()),
                 phrases_json(),
                 gr.Dropdown(choices=_category_choices()),
+                gr.Dropdown(choices=_synth_choices()),
                 manifest_rows(),
                 gr.Dropdown(choices=list(load_manifest())),
                 event_rows(),
@@ -563,6 +675,7 @@ def build_console() -> gr.Blocks:
                 sample_pick,
                 editor,
                 qe_category,
+                synth_pick,
                 manifest,
                 lib_pick,
                 events,
