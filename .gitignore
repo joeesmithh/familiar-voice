@@ -3,6 +3,7 @@
 
 # Local voice samples, generated audio, and logs (private; never commit)
 data/
+data_dev_tools/
 
 # Environments and secrets
 .venv/

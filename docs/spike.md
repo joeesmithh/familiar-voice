@@ -18,15 +18,13 @@ is enough and how long the caregiver's "Build voice library" step will take.
 # The extra index provides the smaller CPU-only torch wheels.
 python -m pip install -e ".[dev]" --extra-index-url https://download.pytorch.org/whl/cpu
 
-# PowerShell: $env:COQUI_TOS_AGREED = "1"
-export COQUI_TOS_AGREED=1
 
 python -m pytest -m slow                # end-to-end check; downloads ~1.8 GB once
 python scripts/time_engine.py --n 5     # rewrites the Results section below
 ```
 
-Setting `COQUI_TOS_AGREED=1` accepts the Coqui Public Model License, which
-allows non-commercial use such as coursework.
+The engine sets `COQUI_TOS_AGREED=1` itself when it loads. This accepts the
+Coqui Public Model License, which allows non-commercial use such as coursework.
 
 ## Results
 

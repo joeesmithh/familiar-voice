@@ -7,7 +7,7 @@ the samples in ``data/samples/``, and writes a results table between the
 
 Run from the project root after ``pip install -e ".[dev]"``::
 
-    COQUI_TOS_AGREED=1 python scripts/time_engine.py --n 5
+    python scripts/time_engine.py --n 5
 """
 
 import argparse

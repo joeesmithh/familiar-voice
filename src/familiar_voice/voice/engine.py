@@ -4,8 +4,9 @@ Every engine turns one piece of text plus the caregiver's reference samples
 into a WAV file. Callers use :func:`synthesize` and never import an engine
 class directly, so XTTS-v2, Tortoise, or a test double can be swapped by
 name. The engine is chosen by the ``engine`` argument, else by the
-``FV_ENGINE`` environment variable, else ``xtts``. XTTS-v2 needs coqui-tts and
-``COQUI_TOS_AGREED=1``; it loads its model only when first used.
+``FV_ENGINE`` environment variable, else ``xtts``. XTTS-v2 needs coqui-tts; it
+accepts the Coqui model license itself and loads its model only when first
+used.
 """
 
 import logging
@@ -100,8 +101,8 @@ class XTTSEngine:
 
     The model (about 1.8 GB) downloads on first use and loads lazily on the
     first call to :meth:`synthesize` or :meth:`load`, then stays in memory.
-    Coqui's model license must be accepted by setting ``COQUI_TOS_AGREED=1``;
-    otherwise coqui-tts would block on an interactive prompt.
+    Loading accepts the Coqui Public Model License by setting
+    ``COQUI_TOS_AGREED=1``, so coqui-tts never blocks on an interactive prompt.
     """
 
     MODEL_NAME = "tts_models/multilingual/multi-dataset/xtts_v2"
@@ -115,18 +116,15 @@ class XTTSEngine:
 
         Raises
         ------
-        RuntimeError
-            If ``COQUI_TOS_AGREED`` is not ``1``.
         ImportError
             If coqui-tts is not installed.
         """
         if self._tts is not None:
             return
-        if os.environ.get(TOS_ENV_VAR) != "1":
-            raise RuntimeError(
-                f"Set {TOS_ENV_VAR}=1 to accept the Coqui Public Model License "
-                "(non-commercial use) before loading XTTS-v2."
-            )
+        # This project accepts the Coqui Public Model License (non-commercial
+        # use, which covers coursework). coqui-tts reads this variable to skip
+        # its interactive license prompt.
+        os.environ.setdefault(TOS_ENV_VAR, "1")
         self._tts = _load_xtts(self.MODEL_NAME, self.DEVICE)
 
     def synthesize(

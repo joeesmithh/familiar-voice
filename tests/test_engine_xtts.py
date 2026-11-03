@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 
 import numpy as np
@@ -44,7 +45,6 @@ def stub_tts(monkeypatch: pytest.MonkeyPatch) -> list[StubTTS]:
         return loaded[-1]
 
     monkeypatch.setattr(engine, "_load_xtts", fake_load)
-    monkeypatch.setenv(TOS_ENV_VAR, "1")
     return loaded
 
 
@@ -80,14 +80,16 @@ def test_xtts_loads_model_once(
     assert len(stub_tts[0].calls) == 3
 
 
-def test_xtts_requires_license_agreement(
-    stub_tts: list[StubTTS], ref_wav: Path, monkeypatch: pytest.MonkeyPatch
+def test_xtts_accepts_license_automatically(
+    stub_tts: list[StubTTS], monkeypatch: pytest.MonkeyPatch
 ) -> None:
+    monkeypatch.setenv(TOS_ENV_VAR, "x")  # record the original so it is restored
     monkeypatch.delenv(TOS_ENV_VAR)
 
-    with pytest.raises(RuntimeError, match=TOS_ENV_VAR):
-        XTTSEngine().load()
-    assert stub_tts == []
+    XTTSEngine().load()
+
+    assert os.environ[TOS_ENV_VAR] == "1"
+    assert len(stub_tts) == 1
 
 
 def test_xtts_rejects_missing_samples(stub_tts: list[StubTTS], data_dir: Path) -> None:
@@ -108,7 +110,6 @@ def test_xtts_synthesizes_non_empty_wav(
     ref_wav: Path, data_dir: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     pytest.importorskip("TTS")
-    monkeypatch.setenv(TOS_ENV_VAR, "1")
     out_path = data_dir / "hello.wav"
 
     synthesize("Hello, I'm right here.", [ref_wav], out_path=out_path, engine="xtts")

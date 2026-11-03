@@ -21,7 +21,7 @@ logic; see [phrases](phrases.md).
 
 ```bash
 python -m familiar_voice
-# INFO:familiar_voice.app.main:Familiar Voice UI is not implemented yet (see roadmap F07).
+# INFO:familiar_voice.app.main:Familiar Voice UI is not implemented yet.
 ```
 
 ## Dependencies

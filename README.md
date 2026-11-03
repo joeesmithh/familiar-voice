@@ -86,6 +86,16 @@ python -m familiar_voice
 
 Then open the local URL Gradio prints (usually <http://127.0.0.1:7860>).
 
+To test the pipeline pieces by hand (samples, phrases, synthesis, library build,
+log) before the full UI exists, run the developer console instead:
+
+```bash
+python -m familiar_voice.app.devtools
+```
+
+The console stores its data in `data_dev_tools/` by default, and the app uses
+`data/`. Both folders are git-ignored. Set `FV_DATA_DIR` to use a different folder.
+
 ### 4. Before every commit
 
 Run these from the project root:
@@ -105,6 +115,6 @@ Fix any remaining Ruff warnings and confirm all tests pass before you commit.
 | `python -m pytest -m integration`     | Tests that call the Claude API                     |
 
 Integration tests need `ANTHROPIC_API_KEY` set as an environment variable.
-Slow tests and the XTTS-v2 engine need `COQUI_TOS_AGREED=1`, which accepts the
-Coqui Public Model License (non-commercial use). The first run downloads the
+The XTTS-v2 engine accepts the Coqui Public Model License (non-commercial use)
+by itself when it loads, so you don't need to set `COQUI_TOS_AGREED`. The first run downloads the
 model (about 1.8 GB). See [docs/spike.md](docs/spike.md) for CPU timings.

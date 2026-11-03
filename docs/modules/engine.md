@@ -57,6 +57,7 @@ print(wav)  # data\library\lonely\lonely-1.wav
   that concatenates or times audio behaves realistically in tests.
 - `XTTSEngine` imports coqui-tts and loads the model on first use, so the app
   and fast tests start without torch. `get_engine()` caches the instance, so
-  the slow CPU load happens once per process. Loading requires
-  `COQUI_TOS_AGREED=1`; otherwise coqui-tts waits on a license prompt that a
-  web app never answers. CPU timings are in [the spike report](../spike.md).
+  the slow CPU load happens once per process. Loading sets
+  `COQUI_TOS_AGREED=1` itself (the project accepts the non-commercial license),
+  because otherwise coqui-tts would wait on a license prompt that a web app
+  never answers. CPU timings are in [the spike report](../spike.md).

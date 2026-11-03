@@ -33,6 +33,10 @@ wav = library_dir() / "worried" / "worried-1.wav"
 FV_DATA_DIR=demo_data python -m familiar_voice
 ```
 
+The app defaults to `data/`. The developer console
+(`python -m familiar_voice.app.devtools`) defaults to `data_dev_tools/`
+(`DEV_TOOLS_DATA_DIR`). Both are git-ignored.
+
 ## Dependencies
 
 - **Uses:** standard library only (`os`, `pathlib`).

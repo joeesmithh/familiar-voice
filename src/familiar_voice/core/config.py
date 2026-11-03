@@ -2,7 +2,8 @@
 
 All voice samples, generated audio, and logs live under one data root so they
 stay private and git-ignored. The root comes from the ``FV_DATA_DIR``
-environment variable and defaults to ``./data``. Directory helpers create
+environment variable and defaults to ``./data``; the developer console
+defaults to ``./data_dev_tools`` instead. Directory helpers create
 their directory on demand; file helpers create the parent directory only.
 """
 
@@ -11,6 +12,7 @@ from pathlib import Path
 
 DATA_DIR_ENV_VAR = "FV_DATA_DIR"
 DEFAULT_DATA_DIR = Path("data")
+DEV_TOOLS_DATA_DIR = Path("data_dev_tools")  # default for the dev console
 
 
 def _ensure_dir(path: Path) -> Path:
