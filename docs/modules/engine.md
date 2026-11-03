@@ -42,8 +42,8 @@ print(wav)  # data\library\lonely\lonely-1.wav
 
 - **Uses:** `familiar_voice.core.config` (for `data_dir()`), `numpy`,
   `soundfile`, `coqui-tts` (imported only when XTTS-v2 loads).
-- **Used by:** `scripts/time_engine.py`; the library builder and conversation
-  mode depend on it.
+- **Used by:** `scripts/time_engine.py`, `familiar_voice.voice.build_library`;
+  conversation mode depends on it.
 
 ## Design Notes
 

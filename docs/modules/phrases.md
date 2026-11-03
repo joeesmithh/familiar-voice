@@ -45,8 +45,8 @@ print(new_id)  # e.g. worried-3f9a1c2b
 
 - **Uses:** `familiar_voice.core.config` (for `phrases_path()`), and the bundled
   `default_phrases.json`.
-- **Used by:** nothing yet; the caregiver phrase editor and library builder
-  depend on it.
+- **Used by:** `familiar_voice.voice.build_library`; the caregiver phrase
+  editor depends on it.
 
 ## Design Notes
 
