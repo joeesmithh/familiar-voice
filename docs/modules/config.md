@@ -36,7 +36,7 @@ FV_DATA_DIR=demo_data python -m familiar_voice
 ## Dependencies
 
 - **Uses:** standard library only (`os`, `pathlib`).
-- **Used by:** `familiar_voice.core.phrases`.
+- **Used by:** `familiar_voice.core.phrases`, `familiar_voice.core.log`.
 
 ## Design Notes
 
