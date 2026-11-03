@@ -25,6 +25,13 @@ authors = [
 requires-python = ">=3.10,<3.12"
 # Runtime dependencies, installed on every machine that runs the app.
 dependencies = [
+    "coqui-tts",  # XTTS-v2 voice cloning; torch is no longer bundled (see below)
+    # coqui-tts makes torch optional. Pin below 2.9: from 2.9 on, torchaudio
+    # needs torchcodec, which needs shared FFmpeg DLLs that the usual Windows
+    # FFmpeg builds (static, .exe only) don't ship. For the smaller CPU-only
+    # wheels, install with --extra-index-url https://download.pytorch.org/whl/cpu
+    "torch>=2.2,<2.9",
+    "torchaudio>=2.2,<2.9",
     "gradio",     # web UI, mic recording, audio playback
     "numpy",      # audio arrays
     "pydub",      # sample conversion and trimming; needs ffmpeg on PATH

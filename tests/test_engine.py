@@ -5,7 +5,7 @@ import pytest
 import soundfile as sf
 
 from familiar_voice.voice import engine
-from familiar_voice.voice.engine import FakeEngine, synthesize
+from familiar_voice.voice.engine import FakeEngine, XTTSEngine, synthesize
 
 
 @pytest.fixture
@@ -88,9 +88,14 @@ def test_default_engine_is_xtts(
     data_dir: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     monkeypatch.delenv(engine.ENGINE_ENV_VAR, raising=False)
+    called: list[str] = []
+    monkeypatch.setattr(
+        XTTSEngine, "synthesize", lambda self, text, *args: called.append(text)
+    )
 
-    with pytest.raises(NotImplementedError, match="XTTS"):
-        synthesize("Hello.", [], out_path=data_dir / "a.wav")
+    synthesize("Hello.", [], out_path=data_dir / "a.wav")
+
+    assert called == ["Hello."]
 
 
 def test_get_engine_returns_cached_instance() -> None:

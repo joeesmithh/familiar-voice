@@ -39,6 +39,45 @@ python -m pip install -e ".[dev]"
 reinstalling. `[dev]` adds the development tools (Ruff and pytest); leave it off
 on a machine that only runs the app.
 
+#### Troubleshooting: SSL certificate error on model download
+
+On Windows, if your venv was created from a conda Python, the first XTTS-v2
+download can fail with `FileNotFoundError: [Errno 2] No such file or directory`
+raised from `ssl.create_default_context` / `load_verify_locations`.
+
+Cause: conda's bash activation script sets `SSL_CERT_FILE` to
+`<conda env>/ssl/cacert.pem`. On Windows that file actually lives at
+`<conda env>\Library\ssl\cacert.pem`. Any shell started from Git Bash, or from a
+terminal that inherits its environment, passes the wrong path to Python.
+
+Check the value:
+
+```powershell
+$env:SSL_CERT_FILE
+```
+
+Fix it by pointing the variable at the real file, using your own conda env path:
+
+```powershell
+# PowerShell, current session only
+$env:SSL_CERT_FILE = "$env:USERPROFILE\miniconda3\envs\python_3.11\Library\ssl\cacert.pem"
+```
+
+```bash
+# Git Bash, current session only
+export SSL_CERT_FILE="$USERPROFILE\miniconda3\envs\python_3.11\Library\ssl\cacert.pem"
+```
+
+Other options:
+
+- Clear it for the session (`Remove-Item Env:SSL_CERT_FILE` or
+  `unset SSL_CERT_FILE`). Python then uses the Windows certificate store.
+- Make it permanent by setting `SSL_CERT_FILE` as a user environment variable in
+  Windows settings, then opening a new terminal.
+
+This only matters for downloads. Once the model is cached in
+`~/.cache/huggingface`, later runs work offline.
+
 ### 3. Run the app
 
 ```bash
@@ -66,3 +105,6 @@ Fix any remaining Ruff warnings and confirm all tests pass before you commit.
 | `python -m pytest -m integration`     | Tests that call the Claude API                     |
 
 Integration tests need `ANTHROPIC_API_KEY` set as an environment variable.
+Slow tests and the XTTS-v2 engine need `COQUI_TOS_AGREED=1`, which accepts the
+Coqui Public Model License (non-commercial use). The first run downloads the
+model (about 1.8 GB). See [docs/spike.md](docs/spike.md) for CPU timings.

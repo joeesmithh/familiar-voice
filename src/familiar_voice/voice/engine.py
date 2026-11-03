@@ -4,23 +4,31 @@ Every engine turns one piece of text plus the caregiver's reference samples
 into a WAV file. Callers use :func:`synthesize` and never import an engine
 class directly, so XTTS-v2, Tortoise, or a test double can be swapped by
 name. The engine is chosen by the ``engine`` argument, else by the
-``FV_ENGINE`` environment variable, else ``xtts``.
+``FV_ENGINE`` environment variable, else ``xtts``. XTTS-v2 needs coqui-tts and
+``COQUI_TOS_AGREED=1``; it loads its model only when first used.
 """
 
+import logging
 import os
 import tempfile
 from collections.abc import Sequence
 from functools import cache
 from pathlib import Path
-from typing import Protocol
+from typing import TYPE_CHECKING, Protocol
 
 import numpy as np
 import soundfile as sf
 
 from familiar_voice.core.config import data_dir
 
+if TYPE_CHECKING:
+    from TTS.api import TTS
+
+logger = logging.getLogger(__name__)
+
 ENGINE_ENV_VAR = "FV_ENGINE"
 DEFAULT_ENGINE = "xtts"
+TOS_ENV_VAR = "COQUI_TOS_AGREED"  # coqui-tts reads this to skip its license prompt
 
 
 class Engine(Protocol):
@@ -88,21 +96,84 @@ class FakeEngine:
 
 
 class XTTSEngine:
-    """Coqui XTTS-v2 zero-shot voice-cloning engine (not implemented yet)."""
+    """Coqui XTTS-v2 zero-shot voice-cloning engine, run on the CPU.
+
+    The model (about 1.8 GB) downloads on first use and loads lazily on the
+    first call to :meth:`synthesize` or :meth:`load`, then stays in memory.
+    Coqui's model license must be accepted by setting ``COQUI_TOS_AGREED=1``;
+    otherwise coqui-tts would block on an interactive prompt.
+    """
+
+    MODEL_NAME = "tts_models/multilingual/multi-dataset/xtts_v2"
+    DEVICE = "cpu"
+
+    def __init__(self) -> None:
+        self._tts: TTS | None = None
+
+    def load(self) -> None:
+        """Load the XTTS-v2 model if it is not loaded yet.
+
+        Raises
+        ------
+        RuntimeError
+            If ``COQUI_TOS_AGREED`` is not ``1``.
+        ImportError
+            If coqui-tts is not installed.
+        """
+        if self._tts is not None:
+            return
+        if os.environ.get(TOS_ENV_VAR) != "1":
+            raise RuntimeError(
+                f"Set {TOS_ENV_VAR}=1 to accept the Coqui Public Model License "
+                "(non-commercial use) before loading XTTS-v2."
+            )
+        self._tts = _load_xtts(self.MODEL_NAME, self.DEVICE)
 
     def synthesize(
         self, text: str, ref_wavs: Sequence[Path], lang: str, out_path: Path
     ) -> None:
-        """Raise, because the XTTS-v2 engine is not implemented yet.
+        """Write `text` spoken in the cloned voice of `ref_wavs` to `out_path`.
+
+        Parameters
+        ----------
+        text : str
+            The phrase to speak.
+        ref_wavs : Sequence[Path]
+            Preprocessed caregiver samples; XTTS-v2 needs about 6 s in total.
+        lang : str
+            XTTS-v2 language code, such as ``"en"`` or ``"es"``.
+        out_path : Path
+            Where to write the 24 kHz WAV file.
 
         Raises
         ------
-        NotImplementedError
-            Always.
+        ValueError
+            If `ref_wavs` is empty.
+        FileNotFoundError
+            If a reference sample does not exist.
         """
-        raise NotImplementedError(
-            f"The XTTS-v2 engine is not implemented yet; set {ENGINE_ENV_VAR}=fake."
+        if not ref_wavs:
+            raise ValueError("XTTS-v2 needs at least one reference sample.")
+        missing = [str(p) for p in ref_wavs if not Path(p).is_file()]
+        if missing:
+            raise FileNotFoundError(f"Reference samples not found: {missing}")
+
+        self.load()
+        self._tts.tts_to_file(
+            text=text,
+            speaker_wav=[str(p) for p in ref_wavs],
+            language=lang,
+            file_path=str(out_path),
         )
+
+
+def _load_xtts(model_name: str, device: str) -> "TTS":
+    """Import coqui-tts and load `model_name` onto `device`."""
+    # Imported here so the app and tests start without torch installed.
+    from TTS.api import TTS
+
+    logger.info("Loading %s on %s (first run downloads ~1.8 GB)", model_name, device)
+    return TTS(model_name, progress_bar=False).to(device)
 
 
 ENGINES: dict[str, type[Engine]] = {

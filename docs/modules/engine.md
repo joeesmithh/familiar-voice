@@ -19,7 +19,8 @@ phrases to build, or play audio.
 - `ENGINES` — the registry mapping names (`fake`, `xtts`) to engine classes.
 - `get_engine()` — returns the cached instance for a registered name.
 - `FakeEngine` — writes a 440 Hz sine tone whose length grows with the text.
-- `XTTSEngine` — placeholder for XTTS-v2; raises `NotImplementedError`.
+- `XTTSEngine` — clones the voice with Coqui XTTS-v2 on the CPU; `load()`
+  loads the model ahead of the first phrase.
 
 ## Usage
 
@@ -40,9 +41,9 @@ print(wav)  # data\library\lonely\lonely-1.wav
 ## Dependencies
 
 - **Uses:** `familiar_voice.core.config` (for `data_dir()`), `numpy`,
-  `soundfile`.
-- **Used by:** nothing yet; the library builder and conversation mode depend
-  on it.
+  `soundfile`, `coqui-tts` (imported only when XTTS-v2 loads).
+- **Used by:** `scripts/time_engine.py`; the library builder and conversation
+  mode depend on it.
 
 ## Design Notes
 
@@ -50,9 +51,12 @@ print(wav)  # data\library\lonely\lonely-1.wav
   environment variable, then `xtts`. Tests set `FV_ENGINE=fake`.
 - Engines are `Protocol`s, not subclasses, so any object with a matching
   `synthesize()` method works, including test doubles.
-- `get_engine()` caches one instance per name. XTTS-v2 takes a long time to
-  load on CPU, so it must load only once per process.
 - Without `out_path`, the WAV goes in the data root rather than the system
   temp folder, so cloned-voice audio stays in the private, git-ignored folder.
 - `FakeEngine` output scales with text length (clamped to 0.2–5 s), so code
   that concatenates or times audio behaves realistically in tests.
+- `XTTSEngine` imports coqui-tts and loads the model on first use, so the app
+  and fast tests start without torch. `get_engine()` caches the instance, so
+  the slow CPU load happens once per process. Loading requires
+  `COQUI_TOS_AGREED=1`; otherwise coqui-tts waits on a license prompt that a
+  web app never answers. CPU timings are in [the spike report](../spike.md).
