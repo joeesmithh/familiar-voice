@@ -79,3 +79,64 @@ def test_file_paths_resolve_under_data_dir(
     # caller to write.
     assert result.parent.is_dir()
     assert not result.exists()
+
+
+# --- Settings from config.yaml ---
+
+
+def write_config(tmp_path: Path, text: str) -> Path:
+    path = tmp_path / "config.yaml"
+    path.write_text(text, encoding="utf-8")
+    return path
+
+
+def test_missing_config_file_uses_defaults(tmp_path: Path) -> None:
+    result = config.load_config(tmp_path / "missing.yaml")
+
+    assert result == config.Config()
+    assert result.synthesis.device == "cpu"
+
+
+def test_empty_config_file_uses_defaults(tmp_path: Path) -> None:
+    assert config.load_config(write_config(tmp_path, "")) == config.Config()
+
+
+def test_config_file_sets_device(tmp_path: Path) -> None:
+    path = write_config(tmp_path, "synthesis:\n  device: cuda\n")
+
+    assert config.load_config(path).synthesis.device == "cuda"
+
+
+def test_empty_section_uses_defaults(tmp_path: Path) -> None:
+    path = write_config(tmp_path, "synthesis:\n")
+
+    assert config.load_config(path).synthesis.device == "cpu"
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "synthesis:\n  device: tpu\n",  # invalid value
+        "synthesis:\n  devise: cuda\n",  # unknown key in a section
+        "synthesis_typo:\n  device: cuda\n",  # unknown section
+        "synthesis: cuda\n",  # section is not a mapping
+        "- cuda\n",  # top level is not a mapping
+    ],
+)
+def test_invalid_config_raises(tmp_path: Path, text: str) -> None:
+    with pytest.raises(ValueError):
+        config.load_config(write_config(tmp_path, text))
+
+
+def test_config_path_env_var_is_used(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    path = write_config(tmp_path, "synthesis:\n  device: cuda\n")
+    monkeypatch.setenv(config.CONFIG_PATH_ENV_VAR, str(path))
+
+    assert config.config_path() == path
+    assert config.load_config().synthesis.device == "cuda"
+
+
+def test_module_config_is_loaded() -> None:
+    assert isinstance(config.config, config.Config)

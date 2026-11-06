@@ -1,4 +1,12 @@
-"""Filesystem locations for local app data.
+"""App settings from ``config.yaml`` and filesystem locations for local app data.
+
+Settings are read once at import from ``config.yaml`` (or the file named by the
+``FV_CONFIG`` environment variable) into frozen dataclasses, exposed as the
+module-level ``config`` object::
+
+    from familiar_voice.core.config import config
+
+    config.synthesis.device  # "cpu" or "cuda"
 
 All voice samples, generated audio, and logs live under one data root so they
 stay private and git-ignored. The root comes from the ``FV_DATA_DIR``
@@ -8,7 +16,11 @@ their directory on demand; file helpers create the parent directory only.
 """
 
 import os
+from dataclasses import dataclass, field, fields
 from pathlib import Path
+from typing import Any, TypeVar
+
+import yaml
 
 DATA_DIR_ENV_VAR = "FV_DATA_DIR"
 DEFAULT_DATA_DIR = Path("data")
@@ -86,3 +98,117 @@ def checkins_path() -> Path:
         ``<data root>/checkins.json``. The file itself is not created.
     """
     return data_dir() / "checkins.json"
+
+
+# --- Settings from config.yaml ---------------------------------------------
+
+CONFIG_PATH_ENV_VAR = "FV_CONFIG"
+DEFAULT_CONFIG_PATH = Path("config.yaml")
+DEVICES = ("cpu", "cuda")  # where voice synthesis runs
+
+_T = TypeVar("_T")
+
+
+@dataclass(frozen=True)
+class SynthesisConfig:
+    """Settings for voice synthesis.
+
+    Attributes
+    ----------
+    device : str
+        Where the voice model runs: ``"cpu"`` or ``"cuda"`` (Nvidia GPU).
+
+    Raises
+    ------
+    ValueError
+        If `device` is not one of ``DEVICES``.
+    """
+
+    device: str = "cpu"
+
+    def __post_init__(self) -> None:
+        """Reject unsupported devices."""
+        if self.device not in DEVICES:
+            raise ValueError(
+                f"synthesis.device must be one of {DEVICES}, got {self.device!r}."
+            )
+
+
+@dataclass(frozen=True)
+class Config:
+    """All app settings, one attribute per ``config.yaml`` section.
+
+    Attributes
+    ----------
+    synthesis : SynthesisConfig
+        The ``synthesis:`` section.
+    """
+
+    synthesis: SynthesisConfig = field(default_factory=SynthesisConfig)
+
+
+def config_path() -> Path:
+    """Return the path of the settings file.
+
+    Returns
+    -------
+    Path
+        The value of ``FV_CONFIG`` if set, otherwise ``./config.yaml``.
+    """
+    path = os.environ.get(CONFIG_PATH_ENV_VAR)
+    return Path(path) if path else DEFAULT_CONFIG_PATH
+
+
+def _check_keys(cls: type, data: dict, section: str) -> None:
+    """Raise ``ValueError`` if `data` has keys that `cls` has no field for."""
+    unknown = sorted(set(data) - {f.name for f in fields(cls)})
+    if unknown:
+        raise ValueError(f"Unknown keys in config section {section!r}: {unknown}")
+
+
+def _build(cls: type[_T], data: Any, section: str) -> _T:
+    """Construct dataclass `cls` from mapping `data`, rejecting unknown keys."""
+    if data is None:
+        data = {}
+    if not isinstance(data, dict):
+        raise ValueError(f"Config section {section!r} must be a mapping.")
+    _check_keys(cls, data, section)
+    return cls(**data)
+
+
+def load_config(path: Path | None = None) -> Config:
+    """Read settings from a YAML file.
+
+    Parameters
+    ----------
+    path : Path, optional
+        The file to read. Defaults to :func:`config_path`.
+
+    Returns
+    -------
+    Config
+        The parsed settings. Keys missing from the file, or a missing or
+        empty file, fall back to the dataclass defaults.
+
+    Raises
+    ------
+    ValueError
+        If the file has an unknown key, a section that is not a mapping, or
+        an invalid value.
+    """
+    path = config_path() if path is None else Path(path)
+    if not path.is_file():
+        return Config()
+    data = yaml.safe_load(path.read_text(encoding="utf-8"))
+    if data is None:
+        return Config()
+    if not isinstance(data, dict):
+        raise ValueError(f"{path} must contain a mapping of sections.")
+    _check_keys(Config, data, "<top level>")
+    return Config(
+        synthesis=_build(SynthesisConfig, data.get("synthesis"), "synthesis"),
+    )
+
+
+config: Config = load_config()
+"""App settings, loaded once at import."""

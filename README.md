@@ -86,6 +86,8 @@ python -m familiar_voice.app.devtools
 
 The console stores its data in `data_dev_tools/` by default, and the app uses
 `data/`. Both folders are git-ignored. Set `FV_DATA_DIR` to use a different folder.
+App settings (such as `synthesis.device: cpu` or `cuda`) live in `config.yaml`;
+set `FV_CONFIG` to use a different settings file.
 See [docs/modules/devtools.md](docs/modules/devtools.md) for a tab-by-tab guide.
 
 ### 4. Before every commit

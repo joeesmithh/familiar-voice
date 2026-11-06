@@ -36,6 +36,7 @@ dependencies = [
     "gradio",     # web UI, mic recording, audio playback
     "numpy",      # audio arrays
     "pydub",      # sample conversion and trimming; needs ffmpeg on PATH
+    "pyyaml",     # parses config.yaml
     "soundfile",  # reading/writing WAV files
 ]
 
