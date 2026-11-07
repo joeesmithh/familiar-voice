@@ -1,36 +1,52 @@
 # `familiar_voice.app`
 
-Starts the Familiar Voice app when run as `python -m familiar_voice`.
+Builds and launches the Familiar Voice Gradio app when run as
+`python -m familiar_voice`.
 
 ## Purpose
 
-This package holds the Gradio user interface: the Caregiver tab and the User
-tab. `__main__.py` forwards to `app.main.main()`, so the launch command stays
-the same as the UI grows. The UI is not built yet; `main()` currently configures
-logging and reports that the UI is unavailable. It contains no phrase or voice
-logic; see [phrases](phrases.md).
+This package holds the Gradio user interface. `app.main` assembles one page
+with two tabs: the User tab for the person being cared for, and the Caregiver
+tab for setup. The User tab comes first, so it is what opens by default. The
+tabs are empty shells for now; buttons, sample recording, the phrase editor,
+and the log view are added in later features.
 
 ## Key Components
 
-- `main()` — configures logging and launches the app. Currently logs a
-  placeholder message.
-- `familiar_voice.__main__` — entry point for `python -m familiar_voice`; calls
-  `main()`.
+- `build_app()` — returns the `gr.Blocks` page with the User and Caregiver
+  tabs. Tests call it without launching a server.
+- `main()` — configures logging and launches `build_app()`.
+- `user.build_user_tab()` — adds the User tab to the enclosing `gr.Blocks`.
+- `caregiver.build_caregiver_tab()` — adds the Caregiver tab to the enclosing
+  `gr.Blocks`.
+- `familiar_voice.__main__` — entry point for `python -m familiar_voice`;
+  calls `main()`.
 
 ## Usage
 
 ```bash
 python -m familiar_voice
-# INFO:familiar_voice.app.main:Familiar Voice UI is not implemented yet.
+# Running on local URL:  http://127.0.0.1:7860
+```
+
+```python
+from familiar_voice.app.main import build_app
+
+app = build_app()  # build without serving, e.g. in tests
 ```
 
 ## Dependencies
 
-- **Uses:** standard library only (`logging`).
+- **Uses:** `gradio`.
 - **Used by:** `familiar_voice.__main__`.
 
 ## Design Notes
 
+- Each tab lives in its own module with a `build_*_tab()` function, so the
+  two views grow independently and `main.py` stays a short assembly step.
+- Gradio callbacks stay thin: they call `core/` and `voice/` functions, which
+  are what tests target.
 - The entry point lives in `app.main` rather than `__main__.py`, so tests and
-  other code can import and call `main()` without running the module as a
-  script.
+  other code can import `main()` without running the module as a script.
+- The developer console (`app.devtools`) is a separate page and is not part
+  of this app; see [devtools](devtools.md).

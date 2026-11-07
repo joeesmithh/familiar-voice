@@ -1,11 +1,39 @@
-"""Launch the Familiar Voice Gradio app."""
+"""Build and launch the Familiar Voice Gradio app.
+
+``build_app()`` assembles the User and Caregiver tabs into one
+``gr.Blocks`` page; ``main()`` serves it. Run it with::
+
+    python -m familiar_voice
+"""
 
 import logging
 
-logger = logging.getLogger(__name__)
+import gradio as gr
+
+from familiar_voice.app.caregiver import build_caregiver_tab
+from familiar_voice.app.user import build_user_tab
+
+APP_TITLE = "Familiar Voice"
+
+
+def build_app() -> gr.Blocks:
+    """Build the app with the User tab first and the Caregiver tab second.
+
+    The User tab comes first so it is the default view for the person
+    being cared for.
+
+    Returns
+    -------
+    gr.Blocks
+        The app; call ``.launch()`` to serve it.
+    """
+    with gr.Blocks(title=APP_TITLE) as app, gr.Tabs(selected="user"):
+        build_user_tab()
+        build_caregiver_tab()
+    return app
 
 
 def main() -> None:
     """Start the app."""
     logging.basicConfig(level=logging.INFO)
-    logger.info("Familiar Voice UI is not implemented yet.")
+    build_app().launch()
