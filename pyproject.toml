@@ -48,6 +48,12 @@ dev = [
     "ruff",    # formatter and linter
 ]
 
+# Commands pip installs into the environment's Scripts/bin folder.
+# Reinstall (pip install -e ".[dev]") after changing this table.
+[project.scripts]
+familiar-voice = "familiar_voice.app.main:main"          # the Caregiver/User app
+familiar-voice-dev = "familiar_voice.app.devtools:main"  # developer test console
+
 # Package discovery: find every package inside src/ (the src layout), so
 # `familiar_voice` and its subpackages get installed.
 [tool.setuptools.packages.find]

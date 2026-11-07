@@ -15,7 +15,7 @@ demo.
 ## Usage
 
 ```powershell
-python -m familiar_voice.app.devtools
+familiar-voice-dev        # same as: python -m familiar_voice.app.devtools
 ```
 
 Open the local URL Gradio prints (usually <http://127.0.0.1:7860>).
@@ -28,7 +28,7 @@ Open the local URL Gradio prints (usually <http://127.0.0.1:7860>).
 ```powershell
 # Start on the fast fake engine, with a scratch data folder
 $env:FV_ENGINE = "fake"; $env:FV_DATA_DIR = "data_scratch"
-python -m familiar_voice.app.devtools
+familiar-voice-dev
 ```
 
 ### Status bar

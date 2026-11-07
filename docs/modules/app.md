@@ -1,7 +1,7 @@
 # `familiar_voice.app`
 
 Builds and launches the Familiar Voice Gradio app when run as
-`python -m familiar_voice`.
+`familiar-voice` (or `python -m familiar_voice`).
 
 ## Purpose
 
@@ -25,7 +25,7 @@ and the log view are added in later features.
 ## Usage
 
 ```bash
-python -m familiar_voice
+familiar-voice            # same as: python -m familiar_voice
 # Running on local URL:  http://127.0.0.1:7860
 ```
 
@@ -38,7 +38,8 @@ app = build_app()  # build without serving, e.g. in tests
 ## Dependencies
 
 - **Uses:** `gradio`.
-- **Used by:** `familiar_voice.__main__`.
+- **Used by:** `familiar_voice.__main__` and the `familiar-voice` command
+  (`[project.scripts]` in `pyproject.toml`).
 
 ## Design Notes
 

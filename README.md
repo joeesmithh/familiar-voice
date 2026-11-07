@@ -100,7 +100,7 @@ This only matters for downloads. Once the model is cached in
 ### 3. Run the app
 
 ```bash
-python -m familiar_voice
+familiar-voice            # same as: python -m familiar_voice
 ```
 
 Then open the local URL Gradio prints (usually <http://127.0.0.1:7860>).
@@ -109,8 +109,11 @@ To test the pipeline pieces by hand (samples, phrases, synthesis, library build,
 log) before the full UI exists, run the developer console instead:
 
 ```bash
-python -m familiar_voice.app.devtools
+familiar-voice-dev        # same as: python -m familiar_voice.app.devtools
 ```
+
+Both commands are installed by `pip install -e ".[dev]"`. If you installed
+before they existed, run that install command once more to get them.
 
 The console stores its data in `data_dev_tools/` by default, and the app uses
 `data/`. Both folders are git-ignored. Set `FV_DATA_DIR` to use a different folder.
