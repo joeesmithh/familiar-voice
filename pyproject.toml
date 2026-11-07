@@ -31,6 +31,7 @@ dependencies = [
     # needs torchcodec, which needs shared FFmpeg DLLs that the usual Windows
     # FFmpeg builds (static, .exe only) don't ship. For the smaller CPU-only
     # wheels, install with --extra-index-url https://download.pytorch.org/whl/cpu
+    # For Nvidia GPU synthesis, reinstall from .../whl/cu126 instead (see README).
     "torch>=2.2,<2.9",
     "torchaudio>=2.2,<2.9",
     "gradio",     # web UI, mic recording, audio playback

@@ -54,6 +54,10 @@ from familiar_voice.core.config import config
 config.synthesis.device  # "cpu"
 ```
 
+`synthesis.device` picks where the XTTS-v2 engine runs. `cuda` needs the CUDA
+build of PyTorch; see "Optional: Nvidia GPU (CUDA) support" in the
+[README](../../README.md).
+
 ## Dependencies
 
 - **Uses:** `pyyaml`, standard library (`os`, `pathlib`, `dataclasses`).

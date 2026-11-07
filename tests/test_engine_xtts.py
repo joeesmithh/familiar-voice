@@ -5,6 +5,7 @@ import numpy as np
 import pytest
 import soundfile as sf
 
+from familiar_voice.core.config import Config, SynthesisConfig
 from familiar_voice.voice import engine
 from familiar_voice.voice.engine import TOS_ENV_VAR, XTTSEngine, synthesize
 
@@ -27,7 +28,8 @@ def ref_wav(data_dir: Path) -> Path:
 class StubTTS:
     """Records `tts_to_file` calls instead of running the model."""
 
-    def __init__(self) -> None:
+    def __init__(self, device: str) -> None:
+        self.device = device
         self.calls: list[dict] = []
 
     def tts_to_file(self, **kwargs: object) -> None:
@@ -41,7 +43,7 @@ def stub_tts(monkeypatch: pytest.MonkeyPatch) -> list[StubTTS]:
     loaded: list[StubTTS] = []
 
     def fake_load(model_name: str, device: str) -> StubTTS:
-        loaded.append(StubTTS())
+        loaded.append(StubTTS(device))
         return loaded[-1]
 
     monkeypatch.setattr(engine, "_load_xtts", fake_load)
@@ -90,6 +92,39 @@ def test_xtts_accepts_license_automatically(
 
     assert os.environ[TOS_ENV_VAR] == "1"
     assert len(stub_tts) == 1
+
+
+def test_xtts_loads_on_configured_device(
+    stub_tts: list[StubTTS], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    cuda_config = Config(synthesis=SynthesisConfig(device="cuda"))
+    monkeypatch.setattr(engine, "config", cuda_config)
+
+    XTTSEngine().load()
+
+    assert stub_tts[0].device == "cuda"
+
+
+def test_xtts_explicit_device_overrides_config(
+    stub_tts: list[StubTTS], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    cuda_config = Config(synthesis=SynthesisConfig(device="cuda"))
+    monkeypatch.setattr(engine, "config", cuda_config)
+
+    XTTSEngine(device="cpu").load()
+
+    assert stub_tts[0].device == "cpu"
+
+
+def test_xtts_cuda_unavailable_raises_clear_error(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    torch = pytest.importorskip("torch")
+    monkeypatch.setattr(torch.cuda, "is_available", lambda: False)
+
+    # The check runs before coqui-tts is imported, so no model is loaded.
+    with pytest.raises(RuntimeError, match="config.yaml"):
+        engine._load_xtts(XTTSEngine.MODEL_NAME, "cuda")
 
 
 def test_xtts_rejects_missing_samples(stub_tts: list[StubTTS], data_dir: Path) -> None:

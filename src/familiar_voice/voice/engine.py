@@ -6,7 +6,8 @@ class directly, so XTTS-v2, Tortoise, or a test double can be swapped by
 name. The engine is chosen by the ``engine`` argument, else by the
 ``FV_ENGINE`` environment variable, else ``xtts``. XTTS-v2 needs coqui-tts; it
 accepts the Coqui model license itself and loads its model only when first
-used.
+used, on the device set by ``synthesis.device`` in ``config.yaml`` (``cpu`` or
+``cuda``).
 """
 
 import logging
@@ -20,7 +21,7 @@ from typing import TYPE_CHECKING, Protocol
 import numpy as np
 import soundfile as sf
 
-from familiar_voice.core.config import data_dir
+from familiar_voice.core.config import config, data_dir
 
 if TYPE_CHECKING:
     from TTS.api import TTS
@@ -97,27 +98,35 @@ class FakeEngine:
 
 
 class XTTSEngine:
-    """Coqui XTTS-v2 zero-shot voice-cloning engine, run on the CPU.
+    """Coqui XTTS-v2 zero-shot voice-cloning engine, on the CPU or an Nvidia GPU.
 
     The model (about 1.8 GB) downloads on first use and loads lazily on the
     first call to :meth:`synthesize` or :meth:`load`, then stays in memory.
     Loading accepts the Coqui Public Model License by setting
     ``COQUI_TOS_AGREED=1``, so coqui-tts never blocks on an interactive prompt.
+
+    Parameters
+    ----------
+    device : str or None, optional
+        ``"cpu"`` or ``"cuda"``. ``None`` uses ``synthesis.device`` from
+        ``config.yaml``.
     """
 
     MODEL_NAME = "tts_models/multilingual/multi-dataset/xtts_v2"
-    DEVICE = "cpu"
 
-    def __init__(self) -> None:
+    def __init__(self, device: str | None = None) -> None:
+        self.device = device or config.synthesis.device
         self._tts: TTS | None = None
 
     def load(self) -> None:
-        """Load the XTTS-v2 model if it is not loaded yet.
+        """Load the XTTS-v2 model onto `device` if it is not loaded yet.
 
         Raises
         ------
         ImportError
             If coqui-tts is not installed.
+        RuntimeError
+            If `device` is ``"cuda"`` but PyTorch cannot use a CUDA GPU.
         """
         if self._tts is not None:
             return
@@ -125,7 +134,7 @@ class XTTSEngine:
         # use, which covers coursework). coqui-tts reads this variable to skip
         # its interactive license prompt.
         os.environ.setdefault(TOS_ENV_VAR, "1")
-        self._tts = _load_xtts(self.MODEL_NAME, self.DEVICE)
+        self._tts = _load_xtts(self.MODEL_NAME, self.device)
 
     def synthesize(
         self, text: str, ref_wavs: Sequence[Path], lang: str, out_path: Path
@@ -168,6 +177,16 @@ class XTTSEngine:
 def _load_xtts(model_name: str, device: str) -> "TTS":
     """Import coqui-tts and load `model_name` onto `device`."""
     # Imported here so the app and tests start without torch installed.
+    import torch
+
+    if device == "cuda" and not torch.cuda.is_available():
+        raise RuntimeError(
+            "synthesis.device is 'cuda', but PyTorch cannot use a CUDA GPU "
+            f"(torch {torch.__version__}, built for CUDA {torch.version.cuda}). "
+            "Install the CUDA build of torch (see 'Optional: Nvidia GPU (CUDA) "
+            "support' in the README) or set synthesis.device: cpu in config.yaml."
+        )
+
     from TTS.api import TTS
 
     logger.info("Loading %s on %s (first run downloads ~1.8 GB)", model_name, device)

@@ -1,3 +1,3 @@
 # Familiar Voice settings. Delete a key to use its default.
 synthesis:
-  device: cpu # "cpu" or "cuda" (Nvidia GPU)
+  device: cuda # "cpu" or "cuda" (Nvidia GPU)

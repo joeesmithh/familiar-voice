@@ -47,6 +47,34 @@ python -m pip install -e ".[dev]"
 reinstalling. `[dev]` adds the development tools (Ruff and pytest); leave it off
 on a machine that only runs the app.
 
+#### Optional: Nvidia GPU (CUDA) support
+
+Voice synthesis runs on the CPU by default. With an Nvidia GPU, building the
+voice library is much faster. The default install gives you CPU-only PyTorch, so
+you must replace it with the CUDA build:
+
+1. Install a recent Nvidia driver. `nvidia-smi` should list your GPU. You don't
+   need the CUDA Toolkit, because the PyTorch wheels include the CUDA runtime.
+2. With the virtual environment active, reinstall torch and torchaudio from
+   PyTorch's CUDA 12.6 index. Keep version 2.8.0, which satisfies the project's
+   `<2.9` pin:
+
+   ```bash
+   python -m pip install --force-reinstall torch==2.8.0 torchaudio==2.8.0 --index-url https://download.pytorch.org/whl/cu126
+   ```
+
+3. Check that PyTorch can see the GPU:
+
+   ```bash
+   python -c "import torch; print(torch.cuda.is_available(), torch.cuda.get_device_name(0))"
+   ```
+
+   It should print `True` followed by your GPU name. If `torch.__version__` ends
+   in `+cpu` (for example, after pip reinstalled torch), repeat step 2.
+
+Then turn on GPU synthesis as described in
+[Enable GPU phrase synthesis](#enable-gpu-phrase-synthesis).
+
 #### Troubleshooting: SSL certificate error on model download
 
 If the first XTTS-v2 download fails with
@@ -89,6 +117,23 @@ The console stores its data in `data_dev_tools/` by default, and the app uses
 App settings (such as `synthesis.device: cpu` or `cuda`) live in `config.yaml`;
 set `FV_CONFIG` to use a different settings file.
 See [docs/modules/devtools.md](docs/modules/devtools.md) for a tab-by-tab guide.
+
+#### Enable GPU phrase synthesis
+
+After you install CUDA support (see
+[Optional: Nvidia GPU (CUDA) support](#optional-nvidia-gpu-cuda-support)), set
+the device in `config.yaml`:
+
+```yaml
+synthesis:
+  device: cuda
+```
+
+Every phrase synthesis now runs on the GPU. That covers
+`python -m familiar_voice.voice.build_library`, the developer console's build
+button, and its Synthesize tab. Restart the app after you change the setting. If
+PyTorch can't use the GPU, the build stops with an error that explains the fix.
+Set `device: cpu` to switch back.
 
 ### 4. Before every commit
 

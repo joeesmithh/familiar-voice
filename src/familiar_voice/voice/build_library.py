@@ -319,8 +319,8 @@ def main(argv: Sequence[str] | None = None) -> int:
     Returns
     -------
     int
-        Process exit code: 0 on success, 1 if there are no samples or the
-        phrase file is invalid.
+        Process exit code: 0 on success, 1 if there are no samples, the
+        phrase file is invalid, or the configured device is unusable.
     """
     parser = argparse.ArgumentParser(
         prog="python -m familiar_voice.voice.build_library",
@@ -336,7 +336,7 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     try:
         summary = build_library(progress=_print_progress, force=args.force)
-    except (NoSamplesError, ValueError) as err:
+    except (NoSamplesError, ValueError, RuntimeError) as err:
         print(f"error: {err}", file=sys.stderr)
         return 1
     print(summary)
