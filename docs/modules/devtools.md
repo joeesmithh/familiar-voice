@@ -39,14 +39,23 @@ after making changes; it does not update by itself.
 
 ### Samples tab
 
-1. Record from the microphone or upload a file in **Recording**.
+The top of the tab shows the passage to read for the next sample. The guided
+reading script has 5 passages. Passage 1 is a spoken consent statement. The
+others are general, phonetically rich text (the Rainbow Passage, Harvard
+sentences, and a passage of questions and numbers for intonation). The
+passage moves on after each saved sample and goes back to 1 when samples
+are deleted. **Recording tips** expands to advice on the room, the
+microphone, and how to speak.
+
+1. Read the shown passage aloud into the microphone, or upload a file, in
+   **Recording**.
 2. Tick **This is my own voice and I consent**. Nothing is saved without it.
 3. Click **Preprocess and save**. The recording is trimmed, normalized, and
    converted to mono 24 kHz, then saved as `samples/sample_<n>.wav`.
 
 The **Samples** box lists each sample's length and the total. It warns under
-6 s (too little to clone) and over 60 s (slower builds with no gain). Aim for
-about 30 s across 3–5 samples. **Play a saved sample** plays back the
+6 s (too little to clone) and over 60 s (slower builds with no gain). Reading all
+5 passages gives about 45–55 s. **Play a saved sample** plays back the
 processed version. **Delete all samples** removes every sample WAV.
 
 ### Phrases tab
@@ -125,7 +134,7 @@ cached by coqui-tts outside the project.
 
 ## Quick End-to-End Check
 
-1. **Samples**: record three 10-second readings, consenting each time.
+1. **Samples**: record the 5 script passages, consenting each time.
 2. **Phrases**: click **Reset to defaults**.
 3. **Synthesize**: run one line with `fake`, then with `xtts`, and compare the
    timings.
@@ -139,7 +148,7 @@ cached by coqui-tts outside the project.
   it.
 - `main()`: sets `FV_DATA_DIR` to `data_dev_tools/` if unset, then launches.
 - Helpers with no Gradio dependency, tested directly: `save_sample()`,
-  `samples_report()`, `next_sample_path()`, `delete_samples()`,
+  `current_passage()`, `samples_report()`, `next_sample_path()`, `delete_samples()`,
   `phrases_json()`, `validate_json()`, `synth_dir()`, `synth_out_path()`,
   `find_synthesized()`, `delete_synthesized()`, `manifest_rows()`,
   `event_rows()`, `status_text()`, `progress_adapter()`, `default_engine()`.
@@ -151,7 +160,7 @@ cached by coqui-tts outside the project.
 - **Uses:** `gradio`, `soundfile`, `familiar_voice.core.config`,
   `familiar_voice.core.log`, `familiar_voice.core.phrases`,
   `familiar_voice.voice.build_library`, `familiar_voice.voice.engine`,
-  `familiar_voice.voice.preprocess`.
+  `familiar_voice.voice.preprocess`, `familiar_voice.voice.reading_script`.
 - **Used by:** nothing. It is a standalone entry point.
 
 ## Design Notes

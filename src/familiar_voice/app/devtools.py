@@ -61,6 +61,7 @@ from familiar_voice.voice.preprocess import (
     preprocess,
     total_duration,
 )
+from familiar_voice.voice.reading_script import RECORDING_TIPS, passage_markdown
 
 logger = logging.getLogger(__name__)
 
@@ -223,6 +224,17 @@ def save_sample(path: str | Path | None, consented: bool) -> str:
     return f"Saved {out.name}.\n\n{samples_report()}"
 
 
+def current_passage() -> str:
+    """Return the reading-script passage for the next sample, as Markdown.
+
+    Returns
+    -------
+    str
+        The passage after the ones already saved, or a done message.
+    """
+    return passage_markdown(len(find_samples()))
+
+
 def delete_samples() -> str:
     """Delete every saved sample WAV.
 
@@ -380,12 +392,14 @@ def _category_choices() -> list[str]:
         return []
 
 
-def _on_save_sample(path: str | None, consented: bool) -> tuple[str, Any]:
-    return save_sample(path, consented), gr.Dropdown(choices=_sample_choices())
+def _on_save_sample(path: str | None, consented: bool) -> tuple[str, Any, str]:
+    message = save_sample(path, consented)
+    return message, gr.Dropdown(choices=_sample_choices()), current_passage()
 
 
-def _on_delete_samples() -> tuple[str, Any, None]:
-    return delete_samples(), gr.Dropdown(choices=[], value=None), None
+def _on_delete_samples() -> tuple[str, Any, None, str]:
+    message = delete_samples()
+    return message, gr.Dropdown(choices=[], value=None), None, current_passage()
 
 
 def _on_play_sample(name: str | None) -> str | None:
@@ -525,10 +539,16 @@ def build_console() -> gr.Blocks:
         refresh_status.click(status_text, outputs=status)
 
         with gr.Tab("Samples"):
+            script_md = gr.Markdown()
+            with gr.Accordion("Recording tips", open=False):
+                gr.Markdown(RECORDING_TIPS)
             recording = gr.Audio(
                 sources=["microphone", "upload"], type="filepath", label="Recording"
             )
-            consent = gr.Checkbox(label="This is my own voice and I consent")
+            consent = gr.Checkbox(
+                label="This is my own voice and I consent "
+                "(passage 1 is the spoken consent)"
+            )
             with gr.Row():
                 save_btn = gr.Button("Preprocess and save", variant="primary")
                 delete_btn = gr.Button("Delete all samples", variant="stop")
@@ -537,10 +557,13 @@ def build_console() -> gr.Blocks:
                 sample_pick = gr.Dropdown(label="Play a saved sample", choices=[])
                 sample_audio = gr.Audio(label="Saved sample", interactive=False)
             save_btn.click(
-                _on_save_sample, [recording, consent], [samples_out, sample_pick]
+                _on_save_sample,
+                [recording, consent],
+                [samples_out, sample_pick, script_md],
             )
             delete_btn.click(
-                _on_delete_samples, outputs=[samples_out, sample_pick, sample_audio]
+                _on_delete_samples,
+                outputs=[samples_out, sample_pick, sample_audio, script_md],
             )
             sample_pick.change(_on_play_sample, sample_pick, sample_audio)
 
@@ -660,6 +683,7 @@ def build_console() -> gr.Blocks:
             return (
                 status_text(),
                 samples_report(),
+                current_passage(),
                 gr.Dropdown(choices=_sample_choices()),
                 phrases_json(),
                 gr.Dropdown(choices=_category_choices()),
@@ -674,6 +698,7 @@ def build_console() -> gr.Blocks:
             outputs=[
                 status,
                 samples_out,
+                script_md,
                 sample_pick,
                 editor,
                 qe_category,

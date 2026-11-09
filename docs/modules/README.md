@@ -14,3 +14,4 @@ module.
 | [`familiar_voice.voice.build_library`](build_library.md) | Batch-builds the voice library: one cloned-voice WAV per phrase, rebuilt only when it changes. |
 | [`familiar_voice.voice.engine`](engine.md) | Turns text and voice samples into a WAV through one swappable voice-cloning interface. |
 | [`familiar_voice.voice.preprocess`](preprocess.md) | Converts caregiver recordings into trimmed, normalized mono 24 kHz WAVs for cloning. |
+| [`familiar_voice.voice.reading_script`](reading_script.md) | Guided reading passages and recording tips for capturing good voice-cloning samples. |

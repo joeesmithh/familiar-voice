@@ -87,6 +87,18 @@ def test_save_sample_preprocesses_with_consent(data_dir, tmp_path):
     assert "under" in message  # 1 s total is below the cloning minimum
 
 
+def test_current_passage_starts_at_consent(data_dir):
+    assert "passage 1 of 5" in devtools.current_passage()
+
+
+@needs_ffmpeg
+def test_current_passage_advances_after_save_and_resets(data_dir, tmp_path):
+    devtools.save_sample(_write_tone(tmp_path / "in.wav"), consented=True)
+    assert "passage 2 of 5" in devtools.current_passage()
+    devtools.delete_samples()
+    assert "passage 1 of 5" in devtools.current_passage()
+
+
 def test_validate_json_reports_errors(data_dir):
     assert devtools.validate_json("{not json")[0].startswith("Invalid JSON")
     assert devtools.validate_json("[]") == ["Phrase data must be a JSON object."]
