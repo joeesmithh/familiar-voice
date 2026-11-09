@@ -34,6 +34,7 @@ dependencies = [
     # For Nvidia GPU synthesis, reinstall from .../whl/cu126 instead (see README).
     "torch>=2.2,<2.9",
     "torchaudio>=2.2,<2.9",
+    "cryptography",  # self-signed HTTPS certificate for remote access
     "gradio",     # web UI, mic recording, audio playback
     "numpy",      # audio arrays
     "pydub",      # sample conversion and trimming; needs ffmpeg on PATH

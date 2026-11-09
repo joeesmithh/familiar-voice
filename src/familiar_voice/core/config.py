@@ -135,6 +135,48 @@ class SynthesisConfig:
 
 
 @dataclass(frozen=True)
+class ServerConfig:
+    """Settings for serving the web apps.
+
+    Attributes
+    ----------
+    host : str
+        Address to listen on: ``"127.0.0.1"`` serves this PC only,
+        ``"0.0.0.0"`` accepts connections from other machines.
+    port : int
+        Port for the main Caregiver/User app.
+    dev_port : int
+        Port for the developer console, so both apps can run at once.
+    https : bool
+        Serve over HTTPS with a self-signed certificate. Browsers allow mic
+        recording only over HTTPS or on localhost.
+
+    Raises
+    ------
+    ValueError
+        If a port is outside 1-65535 or both ports are the same.
+    """
+
+    host: str = "127.0.0.1"
+    port: int = 7860
+    dev_port: int = 7861
+    https: bool = False
+
+    def __post_init__(self) -> None:
+        """Reject invalid or clashing ports."""
+        for name in ("port", "dev_port"):
+            value = getattr(self, name)
+            if not isinstance(value, int) or isinstance(value, bool):
+                raise ValueError(f"server.{name} must be an integer, got {value!r}.")
+            if not 1 <= value <= 65535:
+                raise ValueError(f"server.{name} must be 1-65535, got {value}.")
+        if self.port == self.dev_port:
+            raise ValueError("server.port and server.dev_port must differ.")
+        if not isinstance(self.https, bool):
+            raise ValueError(f"server.https must be true or false, got {self.https!r}.")
+
+
+@dataclass(frozen=True)
 class Config:
     """All app settings, one attribute per ``config.yaml`` section.
 
@@ -142,9 +184,12 @@ class Config:
     ----------
     synthesis : SynthesisConfig
         The ``synthesis:`` section.
+    server : ServerConfig
+        The ``server:`` section.
     """
 
     synthesis: SynthesisConfig = field(default_factory=SynthesisConfig)
+    server: ServerConfig = field(default_factory=ServerConfig)
 
 
 def config_path() -> Path:
@@ -207,6 +252,7 @@ def load_config(path: Path | None = None) -> Config:
     _check_keys(Config, data, "<top level>")
     return Config(
         synthesis=_build(SynthesisConfig, data.get("synthesis"), "synthesis"),
+        server=_build(ServerConfig, data.get("server"), "server"),
     )
 
 

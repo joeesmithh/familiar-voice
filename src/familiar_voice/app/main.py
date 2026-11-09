@@ -10,8 +10,10 @@ import logging
 
 import gradio as gr
 
+from familiar_voice.app import serve
 from familiar_voice.app.caregiver import build_caregiver_tab
 from familiar_voice.app.user import build_user_tab
+from familiar_voice.core.config import config
 
 APP_TITLE = "Familiar Voice"
 
@@ -34,6 +36,6 @@ def build_app() -> gr.Blocks:
 
 
 def main() -> None:
-    """Start the app."""
+    """Start the app on ``server.port`` from ``config.yaml``."""
     logging.basicConfig(level=logging.INFO)
-    build_app().launch()
+    serve.launch(build_app(), config.server.port)

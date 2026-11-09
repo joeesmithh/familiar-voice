@@ -103,7 +103,8 @@ This only matters for downloads. Once the model is cached in
 familiar-voice            # same as: python -m familiar_voice
 ```
 
-Then open the local URL Gradio prints (usually <http://127.0.0.1:7860>).
+Then open the URL Gradio prints. With the checked-in `config.yaml` that is
+<https://localhost:7860>; see [Host the app for other machines](#host-the-app-for-other-machines).
 
 To test the pipeline pieces by hand (samples, phrases, synthesis, library build,
 log) before the full UI exists, run the developer console instead:
@@ -121,22 +122,43 @@ App settings (such as `synthesis.device: cpu` or `cuda`) live in `config.yaml`;
 set `FV_CONFIG` to use a different settings file.
 See [docs/modules/devtools.md](docs/modules/devtools.md) for a tab-by-tab guide.
 
+#### Host the app for other machines
+
+The `server:` section of `config.yaml` sets where both apps listen:
+
+```yaml
+server:
+  host: 0.0.0.0   # "127.0.0.1" = this PC only; "0.0.0.0" = reachable from other machines
+  port: 7860      # main app
+  dev_port: 7861  # developer console
+  https: true     # self-signed certificate
+```
+
+With `https: true`, the first launch creates a self-signed certificate in
+`certs/`. Browsers show a warning for it once; click through it.
+HTTPS is required because browsers only allow mic recording over HTTPS or on
+localhost. Open the app at `https://localhost:7860`; plain `http://` won't connect.
+
+To reach it from outside your network, do these one-time steps:
+
+1. **Firewall:** in an administrator PowerShell, run
+   `New-NetFirewallRule -DisplayName "Familiar Voice" -Direction Inbound -Protocol TCP -LocalPort 7860,7861 -Action Allow`.
+2. **Fixed LAN IP:** in the router, reserve a DHCP address for this PC
+   (`ipconfig` shows the current one).
+3. **Port forwarding:** in the router, forward TCP 7860 (and 7861 for the
+   console) to that LAN IP.
+4. Share `https://<public IP>:7860`.
+
 #### Enable GPU phrase synthesis
 
-After you install CUDA support (see
-[Optional: Nvidia GPU (CUDA) support](#optional-nvidia-gpu-cuda-support)), set
-the device in `config.yaml`:
+After you install CUDA support set the device in `config.yaml`:
 
 ```yaml
 synthesis:
   device: cuda
 ```
 
-Every phrase synthesis now runs on the GPU. That covers
-`python -m familiar_voice.voice.build_library`, the developer console's build
-button, and its Synthesize tab. Restart the app after you change the setting. If
-PyTorch can't use the GPU, the build stops with an error that explains the fix.
-Set `device: cpu` to switch back.
+Every phrase synthesis now runs on the GPU. Set `device: cpu` to switch back.
 
 ### 4. Before every commit
 

@@ -18,14 +18,11 @@ def test_user_tab_comes_first(data_dir):
     assert _tab_labels(app_main.build_app()) == [USER_LABEL, CAREGIVER_LABEL]
 
 
-class _StubApp:
-    launched = False
-
-    def launch(self) -> None:
-        _StubApp.launched = True
-
-
-def test_main_launches_app(monkeypatch):
-    monkeypatch.setattr(app_main, "build_app", _StubApp)
+def test_main_launches_app_on_configured_port(monkeypatch):
+    calls = []
+    monkeypatch.setattr(app_main, "build_app", lambda: "app")
+    monkeypatch.setattr(
+        app_main.serve, "launch", lambda app, port: calls.append((app, port))
+    )
     app_main.main()
-    assert _StubApp.launched
+    assert calls == [("app", app_main.config.server.port)]

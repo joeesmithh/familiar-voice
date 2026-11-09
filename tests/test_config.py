@@ -140,3 +140,44 @@ def test_config_path_env_var_is_used(
 
 def test_module_config_is_loaded() -> None:
     assert isinstance(config.config, config.Config)
+
+
+# --- server: section ---
+
+
+def test_server_defaults_are_local_http() -> None:
+    server = config.Config().server
+
+    assert (server.host, server.port, server.dev_port, server.https) == (
+        "127.0.0.1",
+        7860,
+        7861,
+        False,
+    )
+
+
+def test_config_file_sets_server(tmp_path: Path) -> None:
+    path = write_config(
+        tmp_path,
+        "server:\n  host: 0.0.0.0\n  port: 8000\n  dev_port: 8001\n  https: true\n",
+    )
+
+    assert config.load_config(path).server == config.ServerConfig(
+        host="0.0.0.0", port=8000, dev_port=8001, https=True
+    )
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "server:\n  port: 0\n",  # port out of range
+        "server:\n  dev_port: 70000\n",  # dev port out of range
+        "server:\n  port: 7861\n",  # clashes with the default dev_port
+        "server:\n  port: '7860'\n",  # not an integer
+        "server:\n  https: yes please\n",  # not a boolean
+        "server:\n  hots: 0.0.0.0\n",  # unknown key
+    ],
+)
+def test_invalid_server_config_raises(tmp_path: Path, text: str) -> None:
+    with pytest.raises(ValueError):
+        config.load_config(write_config(tmp_path, text))

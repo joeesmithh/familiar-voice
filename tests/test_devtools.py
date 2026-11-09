@@ -29,23 +29,32 @@ def test_build_console_constructs(data_dir):
     assert devtools.build_console() is not None
 
 
-class _StubConsole:
-    def launch(self) -> None:
-        pass
+@pytest.fixture
+def launched(monkeypatch):
+    """Stub out serving; record (app, port) for each launch."""
+    calls = []
+    monkeypatch.setattr(devtools, "build_console", lambda: "console")
+    monkeypatch.setattr(
+        devtools.serve, "launch", lambda app, port: calls.append((app, port))
+    )
+    return calls
 
 
-def test_main_defaults_to_dev_tools_data_dir(monkeypatch):
+def test_main_defaults_to_dev_tools_data_dir(monkeypatch, launched):
     monkeypatch.setenv(DATA_DIR_ENV_VAR, "x")  # record the original so it is restored
     monkeypatch.delenv(DATA_DIR_ENV_VAR)
-    monkeypatch.setattr(devtools, "build_console", _StubConsole)
     devtools.main()
     assert os.environ[DATA_DIR_ENV_VAR] == "data_dev_tools"
 
 
-def test_main_keeps_existing_data_dir(data_dir, monkeypatch):
-    monkeypatch.setattr(devtools, "build_console", _StubConsole)
+def test_main_keeps_existing_data_dir(data_dir, launched):
     devtools.main()
     assert os.environ[DATA_DIR_ENV_VAR] == str(data_dir)
+
+
+def test_main_launches_on_dev_port(data_dir, launched):
+    devtools.main()
+    assert launched == [("console", devtools.config.server.dev_port)]
 
 
 def test_next_sample_path_skips_existing(data_dir):

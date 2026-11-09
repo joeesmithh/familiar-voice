@@ -5,6 +5,9 @@
 data/
 data_dev_tools/
 
+# Self-signed HTTPS certificate and private key
+certs/
+
 # Environments and secrets
 .venv/
 .env

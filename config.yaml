@@ -1,3 +1,9 @@
 # Familiar Voice settings. Delete a key to use its default.
 synthesis:
   device: cuda # "cpu" or "cuda" (Nvidia GPU)
+
+server:
+  host: 0.0.0.0 # "127.0.0.1" = this PC only; "0.0.0.0" = reachable from other machines
+  port: 7860 # main Caregiver/User app
+  dev_port: 7861 # developer console (separate, so both can run at once)
+  https: true # self-signed certificate; browsers need HTTPS for remote mic recording

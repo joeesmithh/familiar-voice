@@ -22,9 +22,11 @@ from typing import Any
 import gradio as gr
 import soundfile as sf
 
+from familiar_voice.app import serve
 from familiar_voice.core.config import (
     DATA_DIR_ENV_VAR,
     DEV_TOOLS_DATA_DIR,
+    config,
     data_dir,
     library_dir,
     phrases_path,
@@ -689,7 +691,7 @@ def main() -> None:
     logging.basicConfig(level=logging.INFO)
     # Keep dev test data out of the real data/ folder unless FV_DATA_DIR is set.
     os.environ.setdefault(DATA_DIR_ENV_VAR, str(DEV_TOOLS_DATA_DIR))
-    build_console().launch()
+    serve.launch(build_console(), config.server.dev_port)
 
 
 if __name__ == "__main__":
