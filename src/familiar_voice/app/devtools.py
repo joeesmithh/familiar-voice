@@ -546,8 +546,7 @@ def build_console() -> gr.Blocks:
                 sources=["microphone", "upload"], type="filepath", label="Recording"
             )
             consent = gr.Checkbox(
-                label="This is my own voice and I consent "
-                "(passage 1 is the spoken consent)"
+                label="This is my own voice and I consent"
             )
             with gr.Row():
                 save_btn = gr.Button("Preprocess and save", variant="primary")
@@ -608,7 +607,9 @@ def build_console() -> gr.Blocks:
             )
             with gr.Row():
                 synth_text = gr.Textbox(
-                    label="Text", value="It's okay. You are safe.", scale=3
+                    label="Text",
+                    value="How are you doing today? My day is going quite well!",
+                    scale=3,
                 )
                 synth_engine = gr.Dropdown(
                     engines, value=default_engine(), label="Engine"

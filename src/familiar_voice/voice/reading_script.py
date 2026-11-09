@@ -31,8 +31,6 @@ READING_SCRIPT: tuple[str, ...] = (
     "The birch canoe slid on the smooth planks. Glue the sheet to the dark "
     "blue background. It's easy to tell the depth of a well. The juice of "
     "lemons makes fine punch.",
-    "Did you remember to call Zoe on Thursday? Wow, that's great news! I'll "
-    "meet you at seven thirty, just past the bridge near the old mill, okay?",
 )
 
 RECORDING_TIPS = """\
